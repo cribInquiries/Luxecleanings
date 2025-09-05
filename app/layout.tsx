@@ -1,13 +1,15 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navigation from '@/components/navigation'
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { AuthProvider } from "@/contexts/auth-context"
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'Luxe Cleanings',
-  description: 'Professional cleaning services',
+  title: "Property Calendar System",
+  description: "Manage your property bookings and calendars",
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -18,8 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navigation />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

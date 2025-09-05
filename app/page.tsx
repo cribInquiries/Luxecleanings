@@ -1,70 +1,137 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
+"use client"
+
+import { useState } from "react"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { CalendarView } from "@/components/calendar-view"
+import { CleaningDashboard } from "@/components/cleaning-dashboard"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { UserMenu } from "@/components/user-menu"
+import { Toaster } from "@/components/toaster"
+import { DynamicIslandNav } from "@/components/dynamic-island-nav"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
 
 export default function Home() {
+  const [currentView, setCurrentView] = useState("services")
+  const [selectedService, setSelectedService] = useState<string | null>(null)
+
+  const handleNavigate = (view: string) => {
+    setCurrentView(view)
+  }
+
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId)
+    setCurrentView("calendar")
+  }
+
+  const getBreadcrumbs = () => {
+    switch (currentView) {
+      case "services":
+        return [{ label: "Services", current: true }]
+      case "calendar":
+        return [
+          { label: "Services", current: false },
+          { label: "Calendar", current: true },
+        ]
+      default:
+        return [{ label: "Services", current: true }]
+    }
+  }
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case "calendar":
+        return <CalendarView selectedProperty={selectedService} onNavigate={handleNavigate} />
+      case "services":
+      default:
+        return <CleaningDashboard onServiceSelect={handleServiceSelect} />
+    }
+  }
+
+  const breadcrumbs = getBreadcrumbs()
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Luxe Cleanings
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-            Professional cleaning services that bring luxury to your space
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/booking">
-              <Button size="lg">
-                Book Cleaning Service
-              </Button>
-            </Link>
-            <Link href="/demo">
-              <Button variant="outline" size="lg">
-                Test Vercel Blob Integration
-              </Button>
-            </Link>
-          </div>
+    <ProtectedRoute>
+      <SidebarProvider>
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <AppSidebar
+            activeView={currentView}
+            onViewChange={handleNavigate}
+            selectedProperty={selectedService}
+            onPropertySelect={handleServiceSelect}
+          />
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Residential Cleaning</CardTitle>
-              <CardDescription>
-                Complete home cleaning services for your comfort
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">Learn More</Button>
-            </CardContent>
-          </Card>
+        <SidebarInset>
+          {/* Header - responsive */}
+          <header className="flex h-14 md:h-16 shrink-0 items-center gap-2 border-b px-4 safe-top">
+            <SidebarTrigger className="-ml-1 md:hidden" />
+            <Separator orientation="vertical" className="mr-2 h-4 hidden md:block" />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Commercial Cleaning</CardTitle>
-              <CardDescription>
-                Professional office and commercial space cleaning
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">Learn More</Button>
-            </CardContent>
-          </Card>
+            {/* Breadcrumbs - hidden on mobile */}
+            <div className="hidden sm:block">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {breadcrumbs.map((crumb, index) => (
+                    <div key={index} className="flex items-center">
+                      {index > 0 && <BreadcrumbSeparator />}
+                      <BreadcrumbItem>
+                        {crumb.current ? (
+                          <BreadcrumbPage className="text-sm md:text-base">{crumb.label}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                                                          if (crumb.label === "Services") {
+                              handleNavigate("services")
+                            }
+                            }}
+                            className="text-sm md:text-base"
+                          >
+                            {crumb.label}
+                          </BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                    </div>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Deep Cleaning</CardTitle>
-              <CardDescription>
-                Intensive cleaning for special occasions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">Learn More</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </main>
+            {/* Mobile title */}
+            <div className="sm:hidden flex-1">
+              <h1 className="text-lg font-semibold">{breadcrumbs[breadcrumbs.length - 1]?.label}</h1>
+            </div>
+
+            <div className="ml-auto">
+              <UserMenu />
+            </div>
+          </header>
+
+          {/* Main content with mobile padding */}
+          <div className="flex-1 space-y-4 p-4 md:p-6 pb-20 md:pb-6 mobile-safe-area">{renderCurrentView()}</div>
+        </SidebarInset>
+
+        {/* Mobile Navigation */}
+        <DynamicIslandNav
+          activeView={currentView}
+          onViewChange={handleNavigate}
+          selectedProperty={selectedService}
+          onPropertySelect={handleServiceSelect}
+        />
+
+        <Toaster />
+      </SidebarProvider>
+    </ProtectedRoute>
   )
 }
