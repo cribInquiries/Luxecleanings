@@ -115,7 +115,7 @@
 
   /* Mobile optimizations */
   .mobile-safe-area {
-    @apply pb-safe-bottom;
+    @apply pb-20;
   }
 
   .mobile-touch-target {
